@@ -1,0 +1,123 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel CSMain
+
+// Create a RenderTexture with enableRandomWrite flag and set it
+// with cs.SetTexture
+
+RWTexture3D <float4>    Automatum;
+
+int                     width;
+int                     height;
+int                     depth;
+int                     currentLayer;
+ 
+float2 hash22(float2 p)
+{
+    p = float2(dot(p, float2(127.1, 311.7)), dot(p, float2(269.5, 183.3)));
+    return -1.0 + 2.0 * frac(sin(p) * 43758.5453123);
+}
+
+float Perlin(float2 p)
+{
+    float2 pi = floor(p);//Return the largest integer less than or equal to x.
+    float2 pf = frac(p);//Returns the decimal part of the input value.
+
+    //float2 w = pf * pf * (3.0 - 2.0 * pf);
+    float2 w = pf * pf * pf * (6 * pf * pf - 15 * pf + 10);
+
+    return lerp(lerp(dot(hash22(pi + float2(0.0, 0.0)), pf - float2(0.0, 0.0)),
+        dot(hash22(pi + float2(1.0, 0.0)), pf - float2(1, 0.0)), w.x),
+        lerp(dot(hash22(pi + float2(0.0, 1.0)), pf - float2(0.0, 1.0)),
+            dot(hash22(pi + float2(1.0, 1.0)), pf - float2(1.0, 1.0)), w.x), w.y);
+}
+
+float random(float2 uv) {
+    return frac(sin(dot(uv, float2(64.9898, 138.233))) * 43758.5453123);
+}
+
+float rand(float2 co) { return frac(sin(dot(co.xy, float2(12.9898, 78.233))) * 43758.5453); }
+
+float RandomValue(float3 uvw) {
+    return rand(uvw.xz);
+}
+
+float3 RandomColor(float3 uvw) {
+    return float3(random(uvw.xz), random(uvw.xz), random(uvw.xz));
+}
+
+float GetValue(float3 xyz) {
+        int oldY = xyz.y - 1;
+
+        int middle = Automatum[float3(xyz.x, oldY, xyz.z)].w;
+
+        int left = Automatum[float3(xyz.x - 1, oldY, xyz.z)].w;
+        int right = Automatum[float3(xyz.x + 1, oldY, xyz.z)].w;
+        int front = Automatum[float3(xyz.x, oldY, xyz.z - 1)].w;
+        int back = Automatum[float3(xyz.x , oldY, xyz.z - 1)].w;
+
+        int sum = left + right + front + back;
+        if (sum > 3) {
+            return 1.0;
+        }
+
+        else if(sum >= 2  && middle > 0){
+            return 1.0;
+        }
+
+        else {
+            return 0.0;
+        }
+        
+   
+}
+
+[numthreads(8,8,8)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    float3 uvw = (float3)id.xyz / float3(width, height, depth);
+
+    
+       Automatum[id] = float4(1, 0.5, 1, 0.0);
+
+       if (id.x == 0 && id.y == 0 && id.z == 0) {
+           Automatum[id] = float4(0, 0, 1, 1);
+       }
+
+       /* if (id.z == 0) {
+            Automatum[id] = float4(0.0, 1, 1, 1);
+
+        }
+        else if (id.z == 1) {
+            Automatum[id] = float4(0.5, 1, 1, 1);
+
+        }
+        else {
+            Automatum[id] = float4(1, 0, 0, 1);
+
+        }*/
+
+
+    
+    /*if (id.y == currentLayer) {
+
+        if (currentLayer == 0) {
+            v =  RandomValue(uvw);
+           // col = RandomColor(uvw);
+            if (v < 0.4) {
+                v = 0;
+            }
+            else {
+                v = 1.0f;
+            }
+        }
+        else {
+            v = GetValue(id);
+          //  col = GetColor(id.xyz);
+        }
+
+       
+
+
+        Automatum[id] = float4(uvw, v);
+    }    */
+}

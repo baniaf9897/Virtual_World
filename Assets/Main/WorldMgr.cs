@@ -34,7 +34,8 @@ using UnityEditor;
         m_CellularAutomatumManager = transform.GetComponent<CellularAutomatum>();
 
         Texture3D tex3D = new Texture3D(m_CellularAutomatumManager.width, m_CellularAutomatumManager.height, m_CellularAutomatumManager.depth, TextureFormat.RGBA32, false);
-
+        tex3D.filterMode = FilterMode.Point;
+        tex3D.wrapMode = TextureWrapMode.Clamp;
         Graphics.CopyTexture(m_CellularAutomatumManager.automatum, tex3D);
 
         AssetDatabase.CreateAsset(tex3D, "Assets/Main/3DTexture.asset");

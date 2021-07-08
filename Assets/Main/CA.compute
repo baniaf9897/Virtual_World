@@ -77,11 +77,13 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     float3 uvw = (float3)id.xyz / float3(width, height, depth);
 
     
-       Automatum[id] = float4(1, 0.5, 1, 0.0);
+       Automatum[id] = float4(uvw, 0.0);
 
        if (id.x == 0 && id.y == 0 && id.z == 0) {
-           Automatum[id] = float4(0, 0, 1, 1);
+           Automatum[id] = float4(uvw, 1.0);
        }
+
+  
 
        /* if (id.z == 0) {
             Automatum[id] = float4(0.0, 1, 1, 1);

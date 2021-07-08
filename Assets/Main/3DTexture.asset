@@ -16,23 +16,23 @@ Texture3D:
   serializedVersion: 3
   m_ColorSpace: 0
   m_Format: 8
-  m_Width: 3
-  m_Height: 3
-  m_Depth: 3
+  m_Width: 2
+  m_Height: 2
+  m_Depth: 2
   m_MipCount: 1
-  m_DataSize: 108
+  m_DataSize: 32
   m_TextureSettings:
     serializedVersion: 2
-    m_FilterMode: 1
+    m_FilterMode: 0
     m_Aniso: 1
     m_MipBias: 0
-    m_WrapU: 0
-    m_WrapV: 0
-    m_WrapW: 0
+    m_WrapU: 1
+    m_WrapV: 1
+    m_WrapW: 1
   m_UsageMode: 0
   m_IsReadable: 1
-  image data: 108
-  _typelessdata: cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd
+  image data: 32
+  _typelessdata: cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd
   m_StreamData:
     serializedVersion: 2
     offset: 0

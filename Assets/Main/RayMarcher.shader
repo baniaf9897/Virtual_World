@@ -28,7 +28,7 @@ Shader "Unlit/RayMarcher"
   
  
             #define MAX_STEPS 300
-            #define MAX_DIST 100
+            #define MAX_DIST 2
             #define SURF_DIST 0.001
 
             struct appdata
@@ -78,23 +78,93 @@ Shader "Unlit/RayMarcher"
                 return d;
             }
 
+          
+        /*    float  BlendDst(float a, float b, float k)
+            {
+                float h = clamp(0.5 + 0.5 * (b - a) / k, 0.0, 1.0);
+                float blendDst = lerp(b, a, h) - k * h * (1.0 - h);
+                return blendDst;
+            }
+
+            float SmoothUnionSDF(float distA, float distB, float distC, float distD, float distE, float distF, float k) {
+                
+            }*/
+
+            float smin(float a, float b, float k)
+            {
+                float h = clamp(0.5 + 0.5 * (b - a) / k, 0.0, 1.0);
+                float blendDst = lerp(b, a, h) - k * h * (1.0 - h);
+                return blendDst;
+            }
+
+          /*  float SMin(float distA, float distB, float distC, float distD, float distE, float distF, float distG, float k)
+            {
+                float res = exp2(-k * distA) + exp2(-k * distB) + exp2(-k * distC) + exp2(-k * distD) + exp2(-k * distE) + exp2(-k * distF) + exp2(-k * distG);
+                return -log2(res) / k;
+            }*/
+
             float3 GetNumCell(float3 p) {
                 p = p + 0.499;
                 float dimTex = _CellularTex_TexelSize.w;
                 float3 numCell = floor(p * dimTex) / dimTex;
-                
-                return numCell  ;
-            }
 
-            float4 GetCurrentCell(float3 p) {
-                return  tex3D(_CellularTex, GetNumCell(p));
+                return numCell;
             }
 
             float3 GetCurrentObjectPos(float3 p) {
                 float dimTex = _CellularTex_TexelSize.w;
                 float offset = 1.0 / (dimTex * 2.0);
                 return  GetNumCell(p) - 0.5 + offset;
-               
+
+            }
+
+            float GetCellNeighborhood(float3 p) {
+                
+                float d = GetDist(p, GetCurrentObjectPos(p));
+                 float k = 0.1;
+                float dimTex = _CellularTex_TexelSize.w;
+                float offset = 1.0 / (dimTex * 2.0);
+                float cellOffset = 1.0 / _CellularTex_TexelSize.w;
+                float3 numCell = GetNumCell(p);
+
+                float3 front = numCell.x + cellOffset;
+                if (tex3D(_CellularTex, front).a > 0  ) {
+                    d = smin(d,GetDist(p, front - 0.5 + offset),k);
+                }
+
+                float3 back = numCell.x - cellOffset;
+                if (tex3D(_CellularTex, back).a > 0  ) {
+                    d = smin(d, GetDist(p, back - 0.5 + offset),k);
+                }
+                
+                float3 left = numCell.z + cellOffset;
+                if (tex3D(_CellularTex, left).a >  0) {
+                    d = smin(d, GetDist(p, left - 0.5 + offset), k);
+                }
+
+                float3 right = numCell.z - cellOffset;
+                if (tex3D(_CellularTex, right).a > 0  ) {
+                    d = smin(d, GetDist(p, right - 0.5 + offset), k);
+                }
+                float3 top = numCell.y + cellOffset;
+                if (tex3D(_CellularTex, top).a > 0  ) {
+                    d = smin(d, GetDist(p, top - 0.5 + offset), k);
+                }
+
+                float3 bottom = numCell.y - cellOffset;
+                if (tex3D(_CellularTex, bottom).a > 0 ) {
+                    d = smin(d, GetDist(p, bottom - 0.5 + offset), k);
+
+                }
+                
+                
+
+                return d;
+            }
+
+
+            float4 GetCurrentCell(float3 p) {
+                return  tex3D(_CellularTex, GetNumCell(p));
             }
 
            
@@ -104,31 +174,23 @@ Shader "Unlit/RayMarcher"
                 float d0 = 0;
                 float dS;
 
-               
+                [loop]
                 for (int n = 0; n < MAX_STEPS; n++) {
                     float3 p = ro + d0 * rd;
-                   // dS = GetDist(p,float3(0,0,0));
-
-                    //check if the current cell is filled
-                    //if yes => calc dist to current cell
-                    //if no => go to next cell
-                     float4 c = GetCurrentCell(p);
-                
- 
-                     if (c.a > 0.0 && abs(p.x) < 0.5 && abs(p.y) < 0.5 && abs(p.z) < 0.5) {
-                        // position of object in cell == .xyz
-
+                    float4 c = GetCurrentCell(p);
+                 
+                    if (c.a > 0.0 && abs(p.x) <  0.5 && abs(p.y) <  0.5 && abs(p.z) <  0.5) {
                         dS = GetDist(p,GetCurrentObjectPos(p));
 
+                        dS = GetCellNeighborhood(p);
                     }
                     else {
-                        //go to next cell
-                        dS = 0.01;//_CellularTex_TexelSize.xyz;//;max(mincomp(deltas), 0.01);
+                        dS = 0.01;//  1.0 / _CellularTex_TexelSize.w;
                     }
                
                     d0 += dS;
 
-                    if (dS< SURF_DIST || d0 > MAX_DIST) {
+                    if (dS <= SURF_DIST || d0 >= MAX_DIST) {
                         break;
                     }
                 };

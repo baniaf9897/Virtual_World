@@ -104,7 +104,7 @@ float GetValue(float3 id) {
              }   
         }else{
             if (sum == 4   ) {
-                return 4.0;
+                return 2.0;
             }
          }
 
@@ -125,11 +125,11 @@ void CSMain (uint3 id : SV_DispatchThreadID)
   
         v = RandomValue(uvw);
       
-        if (v < 0.5) {
+        if (v < 0.8) {
             v = 0;
         }
         else {
-            v = 4.0f;
+            v = 2.0f;
         }
     }
     else {

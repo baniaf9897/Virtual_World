@@ -72,35 +72,20 @@ Shader "Unlit/RayMarcher"
 
 
             float GetDist(float3 p, float3 pos) {
-                float d = length(p  - pos) - (1.0/ (_CellularTex_TexelSize.w * 4));
+                float d = length(p  - pos) - (1.0/ (_CellularTex_TexelSize.w *8));
 
                 return d;
+
+                float3 q = abs(p) - pos;
+                return length(max(q, 0.0)) + min(max(q.x, max(q.y, q.z)), 0.0);
             }
-
-          
-        /*    float  BlendDst(float a, float b, float k)
-            {
-                float h = clamp(0.5 + 0.5 * (b - a) / k, 0.0, 1.0);
-                float blendDst = lerp(b, a, h) - k * h * (1.0 - h);
-                return blendDst;
-            }
-
-            float SmoothUnionSDF(float distA, float distB, float distC, float distD, float distE, float distF, float k) {
-                
-            }*/
-
+ 
             float smin(float a, float b, float k)
             {
-                float h = clamp(0.5 + 0.5 * (b - a) / k, 0.0, 1.0);
-                float blendDst = lerp(b, a, h) - k * h * (1.0 - h);
-                return blendDst;
+                float h = max(k - abs(a - b), 0.0) / k;
+                return min(a, b) - h * h * h * k * (1.0 / 6.0);
             }
-
-          /*  float SMin(float distA, float distB, float distC, float distD, float distE, float distF, float distG, float k)
-            {
-                float res = exp2(-k * distA) + exp2(-k * distB) + exp2(-k * distC) + exp2(-k * distD) + exp2(-k * distE) + exp2(-k * distF) + exp2(-k * distG);
-                return -log2(res) / k;
-            }*/
+ 
 
             float3 GetNumCell(float3 p) {
                 p = p + 0.499;
@@ -117,48 +102,114 @@ Shader "Unlit/RayMarcher"
 
             }
 
+            float smin3(float a, float b, float c, float k) {
+                a = pow(a, k);
+                b = pow(b, k);
+                c = pow(c, k);
+
+                return pow((a * b * c) / (a * b + b * c + a * c), 1.0 / k);
+            }
+
             float GetCellNeighborhood(float3 p) {
                 
                 float d = GetDist(p, GetCurrentObjectPos(p));
-                 float k = 0.1;
+                float k = 0.1;
                 float dimTex = _CellularTex_TexelSize.w;
                 float offset = 1.0 / (dimTex * 2.0);
                 float cellOffset = 1.0 / _CellularTex_TexelSize.w;
                 float3 numCell = GetNumCell(p);
 
-                float3 front = numCell.x + cellOffset;
+                float fD = 0;
+                float bD = 0;
+                float lD = 0;
+                float rD = 0;
+                float tD = 0;
+                float boD = 0;
+
+
+                float3 front = p;
+                front.x += cellOffset;
+                fD = GetDist(p, GetCurrentObjectPos(front));
+
+
+                float3 back = numCell;
+                back.x -= cellOffset;
+                bD = GetDist(p, back - 0.5 + offset) ;
+
+
+                float3 left = numCell;
+                left.z += cellOffset;
+                lD = GetDist(p, left - 0.5 + offset) ;
+
+
+                float3 right = numCell;
+                right.z -= cellOffset;
+                rD =  GetDist(p, right - 0.5 + offset) ;
+
+                float3 top = numCell;
+                top.y += cellOffset;
+                tD = GetDist(p, top - 0.5 + offset) ;
+
+
+                float3 bottom = numCell;
+                bottom.y -= cellOffset;
+                boD = GetDist(p, bottom - 0.5 + offset);
+
+                float fbl = smin3(fD, bD, lD, 8);
+                float rtb = smin3(rD, tD, boD, 8);
+
+                //d = smin3(d, fbl, rtb, 8);
+
+                fbl = smin(d, fbl , 0.01);
+                rtb = smin(fbl, rtb, 0.01);
+                d =  smin(d, fD, 0.015) ;
+                d = smin(d, bD, 0.015);
+                d = smin(d, tD, 0.05);
+                d = smin(d, boD, 0.05);
+
+                return d;
+                
+
+
+              /*  float3 front = numCell.x + cellOffset;
                 if (tex3D(_CellularTex, front).a > 0  ) {
-                    d = smin(d,GetDist(p, front - 0.5 + offset),k);
+                    fD = smin(d,GetDist(p, front - 0.5 + offset),k);
                 }
 
                 float3 back = numCell.x - cellOffset;
                 if (tex3D(_CellularTex, back).a > 0  ) {
-                    d = smin(d, GetDist(p, back - 0.5 + offset),k);
+                    bD = smin(d, GetDist(p, back - 0.5 + offset),k);
                 }
                 
                 float3 left = numCell.z + cellOffset;
                 if (tex3D(_CellularTex, left).a >  0) {
-                    d = smin(d, GetDist(p, left - 0.5 + offset), k);
+                    lD = smin(d, GetDist(p, left - 0.5 + offset), k);
                 }
 
                 float3 right = numCell.z - cellOffset;
                 if (tex3D(_CellularTex, right).a > 0  ) {
-                    d = smin(d, GetDist(p, right - 0.5 + offset), k);
+                    rD = smin(d, GetDist(p, right - 0.5 + offset), k);
                 }
                 float3 top = numCell.y + cellOffset;
                 if (tex3D(_CellularTex, top).a > 0  ) {
-                    d = smin(d, GetDist(p, top - 0.5 + offset), k);
+                    tD = smin(d, GetDist(p, top - 0.5 + offset), k);
                 }
 
                 float3 bottom = numCell.y - cellOffset;
                 if (tex3D(_CellularTex, bottom).a > 0 ) {
-                    d = smin(d, GetDist(p, bottom - 0.5 + offset), k);
-
+                    boD = smin(d, GetDist(p, bottom - 0.5 + offset), k);
                 }
-                
+
+                fD = smin(fD, bD, k);
+                lD = smin(lD, rD, k);
+                tD = smin(tD, boD, k);
+
+                fD = smin(fD, lD, k);
+                tD = smin(tD, lD, k);
+
                 
 
-                return d;
+                return smin(fD,tD,k);*/
             }
 
 
@@ -181,10 +232,10 @@ Shader "Unlit/RayMarcher"
                     if (c.a > 0.0 && abs(p.x) <  0.5 && abs(p.y) <  0.5 && abs(p.z) <  0.5) {
                         dS = GetDist(p,GetCurrentObjectPos(p));
 
-                       // dS = GetCellNeighborhood(p);
+                       //dS = GetCellNeighborhood(p);
                     }
                     else {
-                        dS = 0.01;//  1.0 / _CellularTex_TexelSize.w;
+                        dS =  1.0 / _CellularTex_TexelSize.w;
                     }
                
                     d0 += dS;
@@ -251,7 +302,7 @@ Shader "Unlit/RayMarcher"
                     float3 p =  ro + rd * d;
                     float3 n = GetNormal(p);
   
-                    col =  float4( n, 1);
+                    col =   float4(n,1);
                 }  
          
   

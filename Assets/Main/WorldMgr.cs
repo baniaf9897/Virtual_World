@@ -8,20 +8,30 @@ using UnityEditor;
     public ComputeShader CA;
     CellularAutomatum m_CellularAutomatumManager;
     public bool trigger = false;
- 
+
+    float updateRateSec = 0.1f;
+    float time = 0.0f;
     void Update()
     {
+        time += Time.deltaTime;
+        if(time > updateRateSec) {
+            m_CellularAutomatumManager.m_generation++;
+            m_CellularAutomatumManager.generateNewGen = true;
+            time = 0.0f;
+        };
+
+
         m_CellularAutomatumManager = transform.GetComponent<CellularAutomatum>();
         if (!m_CellularAutomatumManager.initialized || m_CellularAutomatumManager.generateNewGen)
         {
             UpdateTexture();
+            m_CellularAutomatumManager.initialized = true;
+            m_CellularAutomatumManager.generateNewGen = false;
         };
     }
 
     private void OnValidate()
     {
-        
-        Debug.Log("Updatetexture");
         UpdateTexture();
     }
     void UpdateTexture()
@@ -65,10 +75,7 @@ using UnityEditor;
         CA.SetInt("height", m_CellularAutomatumManager.height);
         CA.SetInt("currentLayer", m_CellularAutomatumManager.m_generation);
 
-        ComputeCA();
-
-        Debug.Log("Current Layer" + m_CellularAutomatumManager.m_generation);
-        
+        ComputeCA();        
     }
     public Texture3D CreateTexture3D()
     {

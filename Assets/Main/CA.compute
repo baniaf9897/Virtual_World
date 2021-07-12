@@ -45,84 +45,96 @@ float3 RandomColor(float3 uvw) {
     return float3(random(uvw.xz), random(uvw.xz), random(uvw.xz));
 }
 
-float GetValue(float3 xyz) {
-        int oldY = xyz.y - 1;
-
-        int middle = Automatum[float3(xyz.x, oldY, xyz.z)].w;
-
-        int left = Automatum[float3(xyz.x - 1, oldY, xyz.z)].w;
-        int right = Automatum[float3(xyz.x + 1, oldY, xyz.z)].w;
-        int front = Automatum[float3(xyz.x, oldY, xyz.z - 1)].w;
-        int back = Automatum[float3(xyz.x , oldY, xyz.z - 1)].w;
-
-        int sum = left + right + front + back;
-        if (sum > 3) {
-            return 1.0;
-        }
-
-        else if(sum >= 2  && middle > 0){
-            return 1.0;
-        }
-
-        else {
+float GetValue(float3 id) {
+        
+        //edge-cases
+        if (id.x == 0 || id.y == 0 || id.z == 0 || id.z == depth - 1 || id.y == height -1 || id.x == width -1) {
             return 0.0;
         }
-        
-   
+
+
+        int oldY = id.y - 1;
+
+        // bottom layer
+        float bf = Automatum[float3(id.x, oldY, id.z + 1)].a;
+        float blf = Automatum[float3(id.x - 1, oldY, id.z + 1)].a;
+        float brf = Automatum[float3(id.x + 1, oldY, id.z + 1)].a;
+
+        float bb = Automatum[float3(id.x, oldY, id.z - 1)].a;
+        float blb = Automatum[float3(id.x - 1, oldY, id.z - 1)].a;
+        float brb = Automatum[float3(id.x + 1, oldY, id.z - 1)].a;
+
+        float bl = Automatum[float3(id.x - 1, oldY, id.z)].a;
+        float br = Automatum[float3(id.x + 1, oldY, id.z)].a;
+        float bm = Automatum[float3(id.x, oldY, id.z)].a;
+
+        //middle layer
+
+        float mf = Automatum[float3(id.x, id.y, id.z + 1)].a;
+        float mlf = Automatum[float3(id.x - 1, id.y, id.z + 1)].a;
+        float mrf = Automatum[float3(id.x + 1, id.y, id.z + 1)].a;
+
+        float mb = Automatum[float3(id.x, id.y, id.z - 1)].a;
+        float mlb = Automatum[float3(id.x - 1, id.y, id.z - 1)].a;
+        float mrb = Automatum[float3(id.x + 1, id.y, id.z - 1)].a;
+
+        float ml = Automatum[float3(id.x - 1, id.y, id.z)].a;
+        float mr = Automatum[float3(id.x + 1, id.y, id.z)].a;
+        float mm = Automatum[float3(id.x, id.y, id.z)].a;
+
+        //top layer
+
+        float tf = Automatum[float3(id.x, id.y + 1, id.z + 1)].a;
+        float tlf = Automatum[float3(id.x - 1, id.y + 1, id.z + 1)].a;
+        float trf = Automatum[float3(id.x + 1, id.y + 1, id.z + 1)].a;
+
+        float tb = Automatum[float3(id.x, id.y + 1, id.z - 1)].a;
+        float tlb = Automatum[float3(id.x - 1, id.y + 1, id.z - 1)].a;
+        float trb = Automatum[float3(id.x + 1, id.y + 1, id.z - 1)].a;
+
+        float tl = Automatum[float3(id.x - 1, id.y + 1, id.z)].a;
+        float tr = Automatum[float3(id.x + 1, id.y + 1, id.z)].a;
+        float tm = Automatum[float3(id.x, id.y + 1, id.z)].a;
+
+        int sum = bf + blf + brf + bb + blb + brb + bl + br + bm + tf + tlf + trf + tb + tlb + trb + tl + tr + tm + mf + mlf + mrf + mb + mlb + mrb + ml + mr;
+
+        if (mm > 0) {
+             if (sum == 4) {
+                return mm;
+             }   
+        }else{
+            if (sum == 4   ) {
+                return 4.0;
+            }
+         }
+
+        if (mm - 1 < 0) {
+            return 0.0;
+        }
+
+        return mm-1;
 }
 
 [numthreads(8,8,8)]
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
     float3 uvw = (float3)id.xyz / float3(width, height, depth);
-
-    
-       Automatum[id] = float4(uvw, 1.0);
-       Automatum[float3(0, 0, 0)] = float4(0, 0, 0, 0);
-
-      /* if (id.x == 0 && id.y == 0 && id.z == 0) {
-           Automatum[id] = float4(uvw, 1.0);
-       }
-       if (id.x == 0 && id.y == 0 && id.z == 1) {
-           Automatum[id] = float4(uvw, 1.0);
-       }*/
+    float v = 0.0;
+ 
+    if (currentLayer == 0 && id.y < 3) {
   
-
-       /* if (id.z == 0) {
-            Automatum[id] = float4(0.0, 1, 1, 1);
-
-        }
-        else if (id.z == 1) {
-            Automatum[id] = float4(0.5, 1, 1, 1);
-
+        v = RandomValue(uvw);
+      
+        if (v < 0.5) {
+            v = 0;
         }
         else {
-            Automatum[id] = float4(1, 0, 0, 1);
-
-        }*/
-
-
-    
-    /*if (id.y == currentLayer) {
-
-        if (currentLayer == 0) {
-            v =  RandomValue(uvw);
-           // col = RandomColor(uvw);
-            if (v < 0.4) {
-                v = 0;
-            }
-            else {
-                v = 1.0f;
-            }
+            v = 4.0f;
         }
-        else {
-            v = GetValue(id);
-          //  col = GetColor(id.xyz);
-        }
-
-       
-
-
-        Automatum[id] = float4(uvw, v);
-    }    */
+    }
+    else {
+        v = GetValue(id);
+    }
+ 
+    Automatum[id] = float4(uvw.y,uvw.y,uvw.y, v);
 }

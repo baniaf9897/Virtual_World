@@ -43,7 +43,7 @@ Shader "Unlit/RayMarcher"
                 float4 vertex : SV_POSITION;
                 float3 ro: TEXCOORD1;
                 float3 hitPos: TEXCOORD2;
-
+ 
 
             };
  
@@ -63,8 +63,7 @@ Shader "Unlit/RayMarcher"
                     
                 o.ro = mul(unity_WorldToObject,float4(_WorldSpaceCameraPos,1));
                 o.hitPos = v.vertex.xyz;
-
- 
+  
                 return o;
             }
 
@@ -182,7 +181,7 @@ Shader "Unlit/RayMarcher"
                     if (c.a > 0.0 && abs(p.x) <  0.5 && abs(p.y) <  0.5 && abs(p.z) <  0.5) {
                         dS = GetDist(p,GetCurrentObjectPos(p));
 
-                        dS = GetCellNeighborhood(p);
+                       // dS = GetCellNeighborhood(p);
                     }
                     else {
                         dS = 0.01;//  1.0 / _CellularTex_TexelSize.w;
@@ -198,7 +197,7 @@ Shader "Unlit/RayMarcher"
             }
 
             float3 GetNormal(float3 p) {
-                float2 e = float2(0.01, 0);
+                float2 e = float2(0.001, 0);
 
                 float3 n = GetDist(p, GetCurrentObjectPos(p)) - float3(
                         GetDist(p - e.xyy, GetCurrentObjectPos(p)),
@@ -208,6 +207,31 @@ Shader "Unlit/RayMarcher"
 
                 return normalize(n);
             }
+
+
+            float CalculateShadow(float3 ro, float3 rd, float dstToShadePoint) {
+                float rayDst = 0;
+                int marchSteps = 0;
+                float shadowIntensity = .2;
+                float brightness = 1;
+
+                while (rayDst < dstToShadePoint) {
+                    marchSteps++;
+                    float dst = GetDist(ro, GetCurrentObjectPos(ro));
+
+                    if (dst <= SURF_DIST) {
+                        return shadowIntensity;
+                    }
+
+                    brightness = min(brightness, dst * 200);
+
+                    ro += rd * dst;
+                    rayDst += dst;
+                }
+                return shadowIntensity + (1 - shadowIntensity) * brightness;
+            }
+
+
 
             half4 frag(v2f i) : SV_Target
             {
@@ -226,8 +250,8 @@ Shader "Unlit/RayMarcher"
                 else {
                     float3 p =  ro + rd * d;
                     float3 n = GetNormal(p);
-
-                    col.rgb = n;
+  
+                    col =  float4( n, 1);
                 }  
          
   

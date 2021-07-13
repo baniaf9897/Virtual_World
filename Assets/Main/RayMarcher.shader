@@ -28,8 +28,8 @@ Shader "Unlit/RayMarcher"
   
  
             #define MAX_STEPS 300
-            #define MAX_DIST 2
-            #define SURF_DIST 0.001
+            #define MAX_DIST 1
+            #define SURF_DIST 0.0001
 
             struct appdata
             {
@@ -69,15 +69,16 @@ Shader "Unlit/RayMarcher"
 
 
             float mincomp(in float3 p) { return min(p.x, min(p.y, p.z)); };
+            float maxcomp(in float3 p) { return max(p.x, max(p.y, p.z)); };
 
 
             float GetDist(float3 p, float3 pos) {
-                float d = length(p  - pos) - (1.0/ (_CellularTex_TexelSize.w *8));
+                //float d = length(p  - pos) - (1.0/ (_CellularTex_TexelSize.w *4));
 
-                return d;
+               // return d;
 
-                float3 q = abs(p) - pos;
-                return length(max(q, 0.0)) + min(max(q.x, max(q.y, q.z)), 0.0);
+                float3 d = abs(p - pos) - (1.0 / (_CellularTex_TexelSize.w * 3));
+                return length(max(d, 0.0)) + min(maxcomp(d), 0.0);
             }
  
             float smin(float a, float b, float k)
@@ -158,58 +159,14 @@ Shader "Unlit/RayMarcher"
                 float fbl = smin3(fD, bD, lD, 8);
                 float rtb = smin3(rD, tD, boD, 8);
 
-                //d = smin3(d, fbl, rtb, 8);
-
-                fbl = smin(d, fbl , 0.01);
-                rtb = smin(fbl, rtb, 0.01);
+ 
+              
                 d =  smin(d, fD, 0.015) ;
                 d = smin(d, bD, 0.015);
-                d = smin(d, tD, 0.05);
-                d = smin(d, boD, 0.05);
+                d = smin(d, tD, 0.02);
+                d = smin(d, boD, 0.02);
 
                 return d;
-                
-
-
-              /*  float3 front = numCell.x + cellOffset;
-                if (tex3D(_CellularTex, front).a > 0  ) {
-                    fD = smin(d,GetDist(p, front - 0.5 + offset),k);
-                }
-
-                float3 back = numCell.x - cellOffset;
-                if (tex3D(_CellularTex, back).a > 0  ) {
-                    bD = smin(d, GetDist(p, back - 0.5 + offset),k);
-                }
-                
-                float3 left = numCell.z + cellOffset;
-                if (tex3D(_CellularTex, left).a >  0) {
-                    lD = smin(d, GetDist(p, left - 0.5 + offset), k);
-                }
-
-                float3 right = numCell.z - cellOffset;
-                if (tex3D(_CellularTex, right).a > 0  ) {
-                    rD = smin(d, GetDist(p, right - 0.5 + offset), k);
-                }
-                float3 top = numCell.y + cellOffset;
-                if (tex3D(_CellularTex, top).a > 0  ) {
-                    tD = smin(d, GetDist(p, top - 0.5 + offset), k);
-                }
-
-                float3 bottom = numCell.y - cellOffset;
-                if (tex3D(_CellularTex, bottom).a > 0 ) {
-                    boD = smin(d, GetDist(p, bottom - 0.5 + offset), k);
-                }
-
-                fD = smin(fD, bD, k);
-                lD = smin(lD, rD, k);
-                tD = smin(tD, boD, k);
-
-                fD = smin(fD, lD, k);
-                tD = smin(tD, lD, k);
-
-                
-
-                return smin(fD,tD,k);*/
             }
 
 
@@ -228,19 +185,19 @@ Shader "Unlit/RayMarcher"
                 for (int n = 0; n < MAX_STEPS; n++) {
                     float3 p = ro + d0 * rd;
                     float4 c = GetCurrentCell(p);
-                 
+
                     if (c.a > 0.0 && abs(p.x) <  0.5 && abs(p.y) <  0.5 && abs(p.z) <  0.5) {
                         dS = GetDist(p,GetCurrentObjectPos(p));
 
                        //dS = GetCellNeighborhood(p);
                     }
                     else {
-                        dS =  1.0 / _CellularTex_TexelSize.w;
+                        dS = max(SURF_DIST, 1.0 / (_CellularTex_TexelSize.w * 4));// 1.0 / (_CellularTex_TexelSize.w * 2);
                     }
                
                     d0 += dS;
 
-                    if (dS <= SURF_DIST || d0 >= MAX_DIST) {
+                    if (dS < SURF_DIST || d0 >= MAX_DIST) {
                         break;
                     }
                 };
@@ -299,10 +256,22 @@ Shader "Unlit/RayMarcher"
                     //col.rgb = GetNumCell(i.hitPos);
                 }
                 else {
+                    float3 _Light = float3(5, 10, 0);
                     float3 p =  ro + rd * d;
                     float3 n = GetNormal(p);
-  
-                    col =   float4(n,1);
+
+         
+                    float3 lightDir =   normalize(_Light - ro);
+                    float lighting =  saturate(saturate(dot(n, lightDir)));
+                    float3 color = float3(1, 0.5, 0.7);
+
+ 
+                       
+                    if (d > 0.5) {
+                        color = float3(1, 1, 1);
+                    }
+                     
+                    col = float4(color * lighting, 1);
                 }  
          
   

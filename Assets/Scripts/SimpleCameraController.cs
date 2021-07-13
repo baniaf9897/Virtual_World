@@ -51,6 +51,8 @@ namespace UnityTemplateProjects
             {
                 t.eulerAngles = new Vector3(pitch, yaw, roll);
                 t.position = new Vector3(x, y, z);
+  
+  
             }
         }
         
@@ -185,7 +187,7 @@ namespace UnityTemplateProjects
             }
 
             // Rotation
-            if (IsCameraRotationAllowed())
+            if (true)
             {
                 var mouseMovement = GetInputLookRotation() * Time.deltaTime * 5;
                 if (invertY)

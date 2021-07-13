@@ -89,7 +89,7 @@ Shader "Unlit/RayMarcher"
  
 
             float3 GetNumCell(float3 p) {
-                p = p + 0.499;
+                p = p + 0.4999;
                 float dimTex = _CellularTex_TexelSize.w;
                 float3 numCell = floor(p * dimTex) / dimTex;
 
@@ -97,7 +97,7 @@ Shader "Unlit/RayMarcher"
             }
 
             float3 GetCurrentObjectPos(float3 p) {
-                float dimTex = _CellularTex_TexelSize.w;
+                float dimTex =  _CellularTex_TexelSize.w;
                 float offset = 1.0 / (dimTex * 2.0);
                 return  GetNumCell(p) - 0.5 + offset;
 
@@ -263,7 +263,7 @@ Shader "Unlit/RayMarcher"
          
                     float3 lightDir =   normalize(_Light - ro);
                     float lighting =  saturate(saturate(dot(n, lightDir)));
-                    float3 color = float3(1, 0.5, 0.7);
+                    float3 color = float3(1, 0.5, 1  - (2*p.y));
 
  
                        

@@ -9,7 +9,7 @@ using UnityEditor;
     CellularAutomatum m_CellularAutomatumManager;
     public bool trigger = false;
 
-    float updateRateSec = 0.5f;
+    float updateRateSec = 1.0f;
     float time = 0.0f;
     void Update()
     {

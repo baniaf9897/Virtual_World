@@ -121,7 +121,7 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     float3 uvw = (float3)id.xyz / float3(width, height, depth);
     float v = 0.0;
  
-    if (currentLayer == 0 && id.y < 2) {
+    if (currentLayer == 0 && id.y < 1) {
   
         v = RandomValue(uvw);
       

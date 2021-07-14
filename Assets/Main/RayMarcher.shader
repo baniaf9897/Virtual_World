@@ -27,9 +27,9 @@ Shader "Unlit/RayMarcher"
             #pragma fragment frag
   
  
-            #define MAX_STEPS 300
-            #define MAX_DIST 1
-            #define SURF_DIST 0.0001
+            #define MAX_STEPS 800
+            #define MAX_DIST 2.0
+            #define SURF_DIST 0.0005
 
             struct appdata
             {
@@ -77,7 +77,7 @@ Shader "Unlit/RayMarcher"
 
                // return d;
 
-                float3 d = abs(p - pos) - (1.0 / (_CellularTex_TexelSize.w * 3));
+                float3 d = abs(p - pos) - (1.0 / (_CellularTex_TexelSize.w * 2));
                 return length(max(d, 0.0)) + min(maxcomp(d), 0.0);
             }
  
@@ -93,6 +93,7 @@ Shader "Unlit/RayMarcher"
                 float dimTex = _CellularTex_TexelSize.w;
                 float3 numCell = floor(p * dimTex) / dimTex;
 
+                
                 return numCell;
             }
 
@@ -171,12 +172,18 @@ Shader "Unlit/RayMarcher"
 
 
             float4 GetCurrentCell(float3 p) {
+
+                float3 numCell = GetNumCell(p);
+                if (numCell.x < 0.0 || numCell.y < 0.0 || numCell.z < 0.0 || numCell.x > 1.0 || numCell.y > 1.0 || numCell.z > 1.0) {
+                    return float4(0, 0, 0, 0);
+                }
+
                 return  tex3D(_CellularTex, GetNumCell(p));
             }
 
            
 
-            float Raymarch(float3 ro, float3 rd) {
+            float2 Raymarch(float3 ro, float3 rd) {
                 
                 float d0 = 0;
                 float dS;
@@ -186,26 +193,34 @@ Shader "Unlit/RayMarcher"
                     float3 p = ro + d0 * rd;
                     float4 c = GetCurrentCell(p);
 
-                    if (c.a > 0.0 && abs(p.x) <  0.5 && abs(p.y) <  0.5 && abs(p.z) <  0.5) {
-                        dS = GetDist(p,GetCurrentObjectPos(p));
-
+                    if (c.a > 0.0  ) {
+                        dS =  GetDist(p, GetCurrentObjectPos(p));
+                        
                        //dS = GetCellNeighborhood(p);
                     }
                     else {
-                        dS = max(SURF_DIST, 1.0 / (_CellularTex_TexelSize.w * 4));// 1.0 / (_CellularTex_TexelSize.w * 2);
+
+                         float3 pCellSpace = p * _CellularTex_TexelSize.w;
+                         float3 rdCellSpace = rd * _CellularTex_TexelSize.w;
+
+                         float3 deltas = (ceil(pCellSpace) - pCellSpace) / rdCellSpace;
+                         dS =   max(mincomp(deltas), SURF_DIST + 0.0005);
+                         
+
+                        //dS = 0.01;// max(SURF_DIST, 1.0 / (_CellularTex_TexelSize.w * 2));// 1.0 / (_CellularTex_TexelSize.w * 2);
                     }
                
                     d0 += dS;
 
-                    if (dS < SURF_DIST || d0 >= MAX_DIST) {
+                    if (dS <= SURF_DIST || d0 > MAX_DIST) {
                         break;
                     }
                 };
-                return d0;
+                return float2(d0,dS);
             }
 
             float3 GetNormal(float3 p) {
-                float2 e = float2(0.001, 0);
+                float2 e = float2(0.0001, 0);
 
                 float3 n = GetDist(p, GetCurrentObjectPos(p)) - float3(
                         GetDist(p - e.xyy, GetCurrentObjectPos(p)),
@@ -241,23 +256,27 @@ Shader "Unlit/RayMarcher"
 
 
 
-            half4 frag(v2f i) : SV_Target
+            half4 frag(v2f i, int facing:VFACE) : SV_Target
             {
+
+ 
+                  
+                
                 
                 float3 ro = i.ro;
                 float3 rd = normalize(i.hitPos - ro);
 
-                float d = Raymarch(ro, rd);
+                float2 d = Raymarch(ro, rd);
                 half4 col = 1;
 
               
-                 if(d >= MAX_DIST) {
+                 if(d.y > SURF_DIST ) {
                     discard;
                     //col.rgb = GetNumCell(i.hitPos);
                 }
                 else {
                     float3 _Light = float3(5, 10, 0);
-                    float3 p =  ro + rd * d;
+                    float3 p =  ro + rd * d.x;
                     float3 n = GetNormal(p);
 
          
@@ -267,11 +286,11 @@ Shader "Unlit/RayMarcher"
 
  
                        
-                    if (d > 0.5) {
+                    if (d.x > 0.5) {
                         color = float3(1, 1, 1);
                     }
                      
-                    col = float4(color * lighting, 1);
+                    col = float4(color * lighting , 1);
                 }  
          
   
@@ -280,6 +299,7 @@ Shader "Unlit/RayMarcher"
                
  
                return col;
+               
             }
                 ENDHLSL
         }

@@ -9,15 +9,15 @@ using UnityEditor;
     CellularAutomatum m_CellularAutomatumManager;
     public bool trigger = false;
 
-    float updateRateSec = 1.0f;
+    float updateRateSec = 0.005f;
     float time = 0.0f;
     void Update()
     {
         time += Time.deltaTime;
         if(time > updateRateSec) {
-            m_CellularAutomatumManager.m_generation++;
+            m_CellularAutomatumManager.m_generation += time;
             m_CellularAutomatumManager.generateNewGen = true;
-            time = 0.0f;
+             time = 0.0f;
         };
 
 
@@ -43,14 +43,14 @@ using UnityEditor;
     {
         m_CellularAutomatumManager = transform.GetComponent<CellularAutomatum>();
 
-        Texture3D tex3D = new Texture3D(m_CellularAutomatumManager.width, m_CellularAutomatumManager.height, m_CellularAutomatumManager.depth, TextureFormat.RGBA32, false);
-      //  tex3D.filterMode = FilterMode.Point;
-        tex3D.wrapMode = TextureWrapMode.Clamp;
-        Graphics.CopyTexture(m_CellularAutomatumManager.automatum, tex3D);
+      /*   Texture3D tex3D = new Texture3D(m_CellularAutomatumManager.width, m_CellularAutomatumManager.height, m_CellularAutomatumManager.depth, TextureFormat.RGBA32, false);
+         tex3D.filterMode = FilterMode.Point;
+         tex3D.wrapMode = TextureWrapMode.Clamp;
+         Graphics.CopyTexture(m_CellularAutomatumManager.automatum, tex3D);
+      */
+        //AssetDatabase.CreateAsset(tex3D, "Assets/Main/3DTexture.asset");
 
-        AssetDatabase.CreateAsset(tex3D, "Assets/Main/3DTexture.asset");
-
-        GetComponent<Renderer>().sharedMaterial.SetTexture("_CellularTex", tex3D);
+        GetComponent<Renderer>().sharedMaterial.SetTexture("_CellularTex", m_CellularAutomatumManager.automatum);
     }
    
     void ComputeCA()
@@ -73,7 +73,7 @@ using UnityEditor;
         CA.SetInt("width", m_CellularAutomatumManager.width);
         CA.SetInt("depth", m_CellularAutomatumManager.depth);
         CA.SetInt("height", m_CellularAutomatumManager.height);
-        CA.SetInt("currentLayer", m_CellularAutomatumManager.m_generation);
+        CA.SetFloat("currentLayer", m_CellularAutomatumManager.m_generation);
 
         ComputeCA();        
     }

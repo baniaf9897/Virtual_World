@@ -15,7 +15,7 @@ public class CellularAutomatum : MonoBehaviour
 
     public int initialNumCells = 10;
 
-    public int m_generation = 0;
+    public float m_generation = 0;
     public bool initialized = false;
     public bool generateNewGen = false;
 
@@ -28,6 +28,7 @@ public class CellularAutomatum : MonoBehaviour
         automatum = new RenderTexture(width, height, 24, RenderTextureFormat.ARGB32);
         automatum.dimension = UnityEngine.Rendering.TextureDimension.Tex3D;
         automatum.enableRandomWrite = true;
+        automatum.filterMode = FilterMode.Point;
         automatum.depth = 0;
         automatum.volumeDepth = depth;
         automatum.Create();

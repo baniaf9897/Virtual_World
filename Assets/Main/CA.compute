@@ -9,7 +9,7 @@ RWTexture3D <float4>    Automatum;
 int                     width;
 int                     height;
 int                     depth;
-int                     currentLayer;
+float                   currentLayer;
  
 float2 hash22(float2 p)
 {
@@ -96,23 +96,32 @@ float GetValue(float3 id) {
         float tr = Automatum[float3(id.x + 1, id.y + 1, id.z)].a;
         float tm = Automatum[float3(id.x, id.y + 1, id.z)].a;
 
-        int sum = bf + blf + brf + bb + blb + brb + bl + br + bm + tf + tlf + trf + tb + tlb + trb + tl + tr + tm + mf + mlf + mrf + mb + mlb + mrb + ml + mr;
+        /*int sum =   ceil(bf) + ceil( blf) + ceil(brf) + ceil(bb) + ceil(blb) + ceil(brb) + ceil(bl) + ceil(br) + ceil(bm) + 
+                    ceil(tf) + ceil(tlf) + ceil(trf) + ceil(tb) + ceil(tlb) + ceil(trb) + ceil(tl) + ceil(tr) + ceil(tm) + 
+                    ceil(mf) + ceil(mlf) + ceil(mrf) + ceil(mb) + ceil(mlb) + ceil(mrb) + ceil(ml) + ceil(mr);*/
 
-        if (mm > 0) {
-             if (sum == 4) {
-                return mm;
-             }   
-        }else{
-            if (sum == 4   ) {
-                return 2.0;
+                   
+       //float sum = bf + blf +  brf  +  bb  +  blb  +  brb  +  bl  +  br  +  bm  + tf  +  tlf  +  trf  + tb  +  tlb + trb  + tl + tr + tm + mf  + mlf + mrf + mb + mlb + mrb + ml + mr;
+
+       float sum = ceil(bf) + ceil(blf) + ceil(brf) + ceil(bb) + ceil(blb) + ceil(brb) + ceil(bl) + ceil(br) + ceil(bm);
+ 
+        if (mm > 0.0) {
+            if (sum < 2 || sum == 4) {
+                return 0;
+             }
+            else if (sum == 3 || sum == 3) {
+                return 1;
+            }
+    
+          
+        }
+        else {
+            if (sum == 3){
+                return 1;
             }
          }
 
-        if (mm - 1 < 0) {
-            return 0.0;
-        }
-
-        return mm-1;
+        return 0;
 }
 
 [numthreads(8,8,8)]
@@ -121,20 +130,50 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     float3 uvw = (float3)id.xyz / float3(width, height, depth);
     float v = 0.0;
  
-    if (currentLayer == 0 && id.y < 1) {
-  
+   /* if (currentLayer == 0 && id.y < 1) {
+        
         v = RandomValue(uvw);
-      
-        if (v < 0.8) {
+        if (v < 0.5) {
             v = 0;
         }
         else {
-            v = 2.0f;
+            v = 1;
         }
+        
+       
     }
     else {
         v = GetValue(id);
     }
- 
-    Automatum[id] = float4(uvw.y,uvw.y,uvw.y, v);
+    float4 cell = 0;
+    cell.rgb = uvw.y;
+    cell.a = v;
+    Automatum[id] = cell;*/
+
+    int gen = floor(currentLayer);
+
+    if (gen == id.y) {
+        if (gen == 0) {
+            v = RandomValue(uvw);
+            if (v < 0.5) {
+                v = 0;
+            }
+            else {
+                v = 1;
+            }
+        }
+        else {
+            if (frac(currentLayer) == 0) {
+                v =  GetValue(id);
+            }else{
+                v = GetValue(id) * frac(currentLayer);
+            }
+        }
+        float4 cell = 0;
+        cell.rgb = uvw.y;
+        cell.a = v;
+        Automatum[id] = cell;
+
+    }
+
 }

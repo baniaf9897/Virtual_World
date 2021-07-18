@@ -79,19 +79,33 @@ Shader "Unlit/RayMarcher"
                 float h = max(k - abs(a - b), 0.0);
                 return max(a, b) + h * h * 0.25 / k;
             }
+             float smin(float a, float b, float k)
+             {
+                 a = pow(a, k); b = pow(b, k);
+                 return pow((a * b) / (a + b), 1.0 / k);
+             }
+             float GetDist(float3 p, float3 pos, float size) {
+                 //float d = length(p  - pos) - (1.0/ (_CellularTex_TexelSize.w *4));
 
-            float SdFbm(float3 pos, float d) {
+                // return d;
+                 pos.y -= (1.0 / (_CellularTex_TexelSize.w * 2.0)) * (1 - size);
+                 float3 d = abs(p - pos) - ((1.0 / (_CellularTex_TexelSize.w * 2.0)) * size);
+                 return  length(max(d, 0.0)) + min(maxcomp(d), 0.0);
+
+
+             }
+
+            float SdFbm(float3 p,float3 pos, float size, float d) {
                 float s = 1.0;
                 for (int i = 0; i < 7; i++)
                 {
-                    // evaluate new octave
-                    float n = s * random(pos.xy);
+                     float n = s * GetDist(p,pos + 0.001,size * 0.1);
 
-                    // subtract
-                    d = smax(d, -n, 0.2 * s);
-
-                    // prepare next octave
-                    pos = 1.60 * pos;
+                     d = smax(d, -n, 0.2 * s);
+ 
+                     p = mul(float3x3(0.00, 0.80, 0.60,
+                         -0.80, 0.36, -0.48,
+                         -0.60, -0.48, 0.64), p);
 
 
                     s = 0.5 * s;
@@ -99,25 +113,15 @@ Shader "Unlit/RayMarcher"
                 return d;
             }
 
+            
+            float CalcComplexDist(float3 p, float3 pos, float size) {
+                return  GetDist(p, pos, size);
+             }
 
-            float GetDist(float3 p, float3 pos, float size) {
-                //float d = length(p  - pos) - (1.0/ (_CellularTex_TexelSize.w *4));
 
-               // return d;
-                pos.y -= (1.0 / (_CellularTex_TexelSize.w * 2.0)) * (1 - size);
-                float3 d = abs(p - pos) - ((1.0 / (_CellularTex_TexelSize.w * 2.0)) * size);
-                return length(max(d, 0.0)) + min(maxcomp(d), 0.0);
 
-               
-
-            }
- 
-            float smin(float a, float b, float k)
-            {
-                float h = max(k - abs(a - b), 0.0) / k;
-                return min(a, b) - h * h * h * k * (1.0 / 6.0);
-            }
- 
+         
+  
 
             float3 GetNumCell(float3 p) {
                 p = p + 0.4999;
@@ -189,7 +193,7 @@ Shader "Unlit/RayMarcher"
                 left.z += cellOffset;
                 c = GetCurrentCell(left);
 
-                lD = GetDist(p, left - 0.5 + offset,c.a) ;
+                lD =    (p, left - 0.5 + offset,c.a) ;
 
 
                 float3 right = numCell;
@@ -240,7 +244,7 @@ Shader "Unlit/RayMarcher"
                     float4 c = GetCurrentCell(p);
 
                     if (c.a > 0.0  ) {
-                         dS =  GetDist(p, GetCurrentObjectPos(p), c.a);
+                        dS = CalcComplexDist(p, GetCurrentObjectPos(p), c.a);// GetDist(p, GetCurrentObjectPos(p), c.a);
                         
                        //dS = GetCellNeighborhood(p);
                     }
@@ -269,10 +273,10 @@ Shader "Unlit/RayMarcher"
                 float2 e = float2(0.0001, 0);
                 float4 c = GetCurrentCell(p);
 
-                float3 n = GetDist(p, GetCurrentObjectPos(p),c.a) - float3(
-                        GetDist(p - e.xyy, GetCurrentObjectPos(p), c.a),
-                        GetDist(p - e.yxy, GetCurrentObjectPos(p), c.a),
-                        GetDist(p - e.yyx, GetCurrentObjectPos(p), c.a)
+                float3 n = CalcComplexDist(p, GetCurrentObjectPos(p),c.a) - float3(
+                    CalcComplexDist(p - e.xyy, GetCurrentObjectPos(p), c.a),
+                    CalcComplexDist(p - e.yxy, GetCurrentObjectPos(p), c.a),
+                    CalcComplexDist(p - e.yyx, GetCurrentObjectPos(p), c.a)
                  );
 
                 return normalize(n);
@@ -287,7 +291,7 @@ Shader "Unlit/RayMarcher"
 
                 while (rayDst < dstToShadePoint) {
                     marchSteps++;
-                    float dst = GetDist(ro, GetCurrentObjectPos(ro),1);
+                    float dst = CalcComplexDist(ro, GetCurrentObjectPos(ro),1);
 
                     if (dst <= SURF_DIST) {
                         return shadowIntensity;

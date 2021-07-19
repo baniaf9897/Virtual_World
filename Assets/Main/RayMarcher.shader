@@ -51,6 +51,7 @@ Shader "Unlit/RayMarcher"
             sampler3D _CellularTex;
             float4 _CellularTex_ST;
             float4 _CellularTex_TexelSize;
+            
 
             v2f vert (appdata v)
             {
@@ -309,7 +310,7 @@ Shader "Unlit/RayMarcher"
  
                   
                 
-                
+     
                 float3 ro = i.ro;
                 float3 rd = normalize(i.hitPos - ro);
 
@@ -329,13 +330,9 @@ Shader "Unlit/RayMarcher"
          
                     float3 lightDir =   normalize(_Light - ro);
                     float lighting =  saturate(saturate(dot(n, lightDir)));
-                    float3 color = float3(1, 0.5, 1  - (2*p.y));
-
- 
-                       
-                    if (d.x > 0.5) {
-                        color = float3(1, 1, 1);
-                    }
+                    float3 color = float3(1, 0.5,  p.x  );   
+                    color -= float3(0.5 * d.x, 0.5 * d.x, 0.5 * d.x);
+                  
                      
                     col = float4(color * lighting , 1);
                 }  

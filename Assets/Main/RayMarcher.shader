@@ -27,9 +27,9 @@ Shader "Unlit/RayMarcher"
             #pragma fragment frag
   
  
-            #define MAX_STEPS 800
+            #define MAX_STEPS 1000
             #define MAX_DIST 2.0
-            #define SURF_DIST 0.0005
+            #define SURF_DIST 0.0006
 
             struct appdata
             {
@@ -323,18 +323,27 @@ Shader "Unlit/RayMarcher"
                     //col.rgb = GetNumCell(i.hitPos);
                 }
                 else {
-                    float3 _Light = float3(5, 10, 0);
+                    float3 _Light1 = float3(10, 5, 0);
+                   // float3 _Light2 = float3(-10, 10, 0);
+
                     float3 p =  ro + rd * d.x;
                     float3 n = GetNormal(p);
 
          
-                    float3 lightDir =   normalize(_Light - ro);
-                    float lighting =  saturate(saturate(dot(n, lightDir)));
-                    float3 color = float3(1, 0.5,  p.x  );   
+                    float3 lightDir1 =   normalize(_Light1 - ro);
+                    float lighting1 =  saturate(saturate(dot(n, lightDir1)));
+
+                    //float3 lightDir2 = normalize(_Light2 - ro);
+                    //float lighting2 = saturate(saturate(dot(n, lightDir2)));
+
+                    float3 color = float3(0.8, 0.5, 0.54);// *lighting2;
                     color -= float3(0.5 * d.x, 0.5 * d.x, 0.5 * d.x);
                   
-                     
-                    col = float4(color * lighting , 1);
+                     //color.r *= lighting2 * 2.5;
+                     col = float4(color   *  lighting1  , 1);
+
+                    //col = float4(color * lighting1 * 1.5, 1);
+
                 }  
          
   

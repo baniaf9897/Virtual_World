@@ -158,6 +158,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   CA: {fileID: 7200000, guid: c520de7a79952c24faef2be624515123, type: 3}
   trigger: 0
+  ruleSurviveLow: 0
+  ruleSurviveHigh: 0
+  ruleDieLow: 0
+  ruleDieHigh: 0
+  ruleBornLow: 0
+  ruleBornHigh: 0
 --- !u!64 &171947077
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -247,7 +253,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4710a43d888129f4da5608d58772215a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  automatum: {fileID: 1685146337}
+  automatum: {fileID: 1266669565}
   texture: {fileID: 0}
   width: 10
   depth: 10
@@ -293,8 +299,8 @@ Camera:
   m_GameObject: {fileID: 513383481}
   m_Enabled: 1
   serializedVersion: 2
-  m_ClearFlags: 1
-  m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
+  m_ClearFlags: 2
+  m_BackGroundColor: {r: 0.6037736, g: 0.6037736, b: 0.6037736, a: 0}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
   m_FOVAxisMode: 0
@@ -385,7 +391,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c3d6e34ee7cd94c49a1fd7fe890d5d77, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!84 &566064083
+--- !u!84 &1266669565
 RenderTexture:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -399,8 +405,8 @@ RenderTexture:
   m_DownscaleFallback: 0
   m_IsAlphaChannelOptional: 0
   serializedVersion: 3
-  m_Width: 50
-  m_Height: 50
+  m_Width: 10
+  m_Height: 10
   m_AntiAliasing: 1
   m_MipCount: -1
   m_DepthFormat: 0
@@ -413,14 +419,14 @@ RenderTexture:
   m_EnableCompatibleFormat: 1
   m_TextureSettings:
     serializedVersion: 2
-    m_FilterMode: 1
+    m_FilterMode: 0
     m_Aniso: 1
     m_MipBias: 0
     m_WrapU: 1
     m_WrapV: 1
     m_WrapW: 1
   m_Dimension: 3
-  m_VolumeDepth: 50
+  m_VolumeDepth: 10
 --- !u!1 &1586271240
 GameObject:
   m_ObjectHideFlags: 0
@@ -532,6 +538,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   CA: {fileID: 7200000, guid: c520de7a79952c24faef2be624515123, type: 3}
   trigger: 0
+  ruleSurviveLow: 2
+  ruleSurviveHigh: 2
+  ruleDieLow: 4
+  ruleDieHigh: 4
+  ruleBornLow: 1
+  ruleBornHigh: 1
 --- !u!114 &1586271246
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -544,14 +556,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4710a43d888129f4da5608d58772215a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  automatum: {fileID: 566064083}
+  automatum: {fileID: 2011811569}
   texture: {fileID: 0}
-  width: 50
-  depth: 50
-  height: 50
+  width: 80
+  depth: 80
+  height: 80
   initialNumCells: 5
   m_generation: 0
-  initialized: 0
+  initialized: 1
   generateNewGen: 0
 --- !u!1 &1678173012
 GameObject:
@@ -646,7 +658,7 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 50, y: -30, z: 0}
---- !u!84 &1685146337
+--- !u!84 &2011811569
 RenderTexture:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -660,8 +672,8 @@ RenderTexture:
   m_DownscaleFallback: 0
   m_IsAlphaChannelOptional: 0
   serializedVersion: 3
-  m_Width: 10
-  m_Height: 10
+  m_Width: 80
+  m_Height: 80
   m_AntiAliasing: 1
   m_MipCount: -1
   m_DepthFormat: 0
@@ -674,11 +686,11 @@ RenderTexture:
   m_EnableCompatibleFormat: 1
   m_TextureSettings:
     serializedVersion: 2
-    m_FilterMode: 1
+    m_FilterMode: 0
     m_Aniso: 1
     m_MipBias: 0
     m_WrapU: 1
     m_WrapV: 1
     m_WrapW: 1
   m_Dimension: 3
-  m_VolumeDepth: 10
+  m_VolumeDepth: 80
